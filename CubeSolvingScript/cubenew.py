@@ -270,18 +270,22 @@ if __name__=='__main__':
         fill_stickers(preview,stickers,state)
         texton_preview_stickers(preview,stickers)
 
-        # for i in range(9):
-        #     hsv.append(frame[stickers['main'][i][1]+10][stickers['main'][i][0]+10])
+        for i in range(9):
+            hsv.append(frame[stickers['main'][i][1]+10][stickers['main'][i][0]+10])
         
-        # a=0
-        # for x,y in stickers['current']:
-        #     color_name=color_detect(hsv[a][0],hsv[a][1],hsv[a][2])
-        #     cv2.rectangle(img,(x,y),(x+30,y+30),color[color_name],-1)
-        #     a+=1
-        #     current_state.append(color_name)
+        
+        # TODO: get current state
+        current_state = ['orange'] * 9
+        
+        # update view
+        a=0
+        for x,y in stickers['current']:
+            color_name=current_state[a]  #color_detect(hsv[a][0],hsv[a][1],hsv[a][2])
+            cv2.rectangle(img,(x,y),(x+30,y+30),color[color_name],-1)
+            a+=1
+            # current_state.append(color_name)
         # print(current_state)
 
-        current_state = ['white'] * 9
         
         k = cv2.waitKey(5) & 0xFF
         if k == 27:

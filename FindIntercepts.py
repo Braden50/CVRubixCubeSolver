@@ -1,14 +1,24 @@
 import cv2
 import numpy as np
 from collections import defaultdict
+from util import show_image
+import time
 
 
 def main():
-    file_path = 'C:/Users/jason/OneDrive/Pictures/Project/'
-    img = cv2.imread(file_path + '1.jpg', cv2.IMREAD_COLOR)
-    gray_image = cv2.imread(file_path + '1.jpg', cv2.IMREAD_GRAYSCALE)
-    edges = cv2.Canny(gray_image, 20, 180, apertureSize=3)
+    # file_path = 'C:/Users/jason/OneDrive/Pictures/Project/'
+    file_path = "C:/Users/brade/OneDrive/Desktop/EE428/FinalPro/"
+    file_name = "rube_test.jpg"
+
+    img = cv2.imread(file_name, cv2.IMREAD_COLOR)
+
+
+    gray_image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
+    gray_image = cv2.GaussianBlur(gray_image,(5,5),cv2.BORDER_DEFAULT)
+    edges = cv2.Canny(gray_image, 10, 50, apertureSize=3)
     print('Size is: ', img.shape)
+
+    show_image(edges)
 
 
     lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
@@ -38,14 +48,8 @@ def main():
                  1)  # vertical line
         cv2.line(img, (pt[0] - length, pt[1]), (pt[0] + length, pt[1]), (255, 0, 255), 1)
 
-
-    cv2.imshow('Segmented Lines', img)
-    cv2.waitKey(0)
-    # cv2.imshow('Gray Vision', gray_image)
-    # cv2.waitKey(0)
-    cv2.imshow('Edges', edges)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    show_image(img, 'Segmented Lines', wait=False)
+    show_image(edges, 'Edges')
 
 
 def segment_by_angle_kmeans(lines, k=2, **kwargs):
