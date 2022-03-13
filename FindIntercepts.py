@@ -3,27 +3,38 @@ import numpy as np
 from collections import defaultdict
 from util import show_image
 import time
+import math
 
 
 def main():
-    # file_path = 'C:/Users/jason/OneDrive/Pictures/Project/'
     file_path = "C:/Users/brade/OneDrive/Desktop/EE428/FinalPro/"
     file_name = "rube_test.jpg"
+    findIntercepts(file_name, show=True)
+
+
+def findIntercepts(file_name, show=False, separate=True):
+    # file_path = 'C:/Users/jason/OneDrive/Pictures/Project/'
 
     img = cv2.imread(file_name, cv2.IMREAD_COLOR)
 
 
     gray_image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
     gray_image = cv2.GaussianBlur(gray_image,(5,5),cv2.BORDER_DEFAULT)
-    edges = cv2.Canny(gray_image, 10, 50, apertureSize=3)
+    edges = cv2.Canny(gray_image, 2, 20, apertureSize=3)
     print('Size is: ', img.shape)
 
-    show_image(edges)
+    # cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+    # cv2.imshow("test", img)
 
-
-    lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
+    lines = cv2.HoughLines(edges, 1, np.pi/180, 150)
     for line in lines:
         for rho, theta in line:
+            print(theta)
+            # Assumes face lines are either vertical or horizontal
+            if math.radians(110) < theta < math.radians(170) or math.radians(10) < theta < math.radians(80): 
+                print("Skipped:", theta)
+                continue 
+            print(math.radians(110), theta, math.radians(170), '/t', theta, math.radians(10))
             a = np.cos(theta)
             b = np.sin(theta)
             x0 = a * rho
@@ -34,10 +45,10 @@ def main():
             y2 = int(y0 - 3000 * a)
 
             cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.imshow("test", img)
 
     segmented = segment_by_angle_kmeans(lines)
     intersections = segmented_intersections(segmented)
-    print(intersections)
 
     separated_intersections = separate_intersections(intersections)
 
@@ -48,9 +59,13 @@ def main():
                  1)  # vertical line
         cv2.line(img, (pt[0] - length, pt[1]), (pt[0] + length, pt[1]), (255, 0, 255), 1)
 
-    show_image(img, 'Segmented Lines', wait=False)
-    show_image(edges, 'Edges')
-
+    if show:
+        show_image(img, 'Segmented Lines', wait=False)
+        show_image(edges, 'Edges')
+    if separate:
+        return separated_intersections
+    else:
+        return intersections
 
 def segment_by_angle_kmeans(lines, k=2, **kwargs):
     """Groups lines based on angle with k-means.
@@ -130,7 +145,7 @@ def separate_intersections(intersections):
         if unique_flag == True:
             #add intersection to unique intersections
             unique_intersections.append([[intersection[0][0], intersection[0][1]]])
-    print("Unique Intersections are:", unique_intersections)
+    # print("Unique Intersections are:", unique_intersections)
     return unique_intersections
 
 

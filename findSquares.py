@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
-from FindIntercepts import main as findIntercepts
+from FindIntercepts import findIntercepts
+from util import show_image
+import numpy as np
 
 '''
 Diction:
@@ -18,4 +20,53 @@ Heuristics given many intersection points:
 - All intersection points will be clustered into one of four x location clusters and y location clusters
 
 '''
+
+def main():
+    findSquares("rube_test2.jpg", show=True)
+
+
+def findSquares(img_loc, show=False):
+    img = cv2.imread(img_loc, cv2.IMREAD_COLOR)
+    if img is None:
+        raise Exception("No Image Uploaded")
+    intercepts = fixIntercepts(findIntercepts(img_loc, show=True))
+    x_vals = [intercept[0] for intercept in intercepts]
+    y_vals = [intercept[1] for intercept in intercepts]
+
+    max_x = max(x_vals)
+    min_x = min(x_vals)
+    max_y = max(y_vals)
+    min_y = min(y_vals)
+
+    top_left = [min_x, min_y]
+    top_right = [max_x, min_y]
+    bottom_left = [min_x, max_y]
+    bottom_right = [max_x, max_y]
+
+    # face_vertical_slope = 
+    # face_horizontal_slope = 
+
+    cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+    cv2.imshow("test", cv2.rectangle(img, top_left, bottom_right,(0,255,0),3)) 
+    # show_image(img, wait=False)
+    
+    cv2.waitKey(0)
+
+
+
+def fixIntercepts(intersections):
+    ''' [[[x, y]],]  -> [[x, y],] '''
+    new_intersections = []
+
+    for super_intersection in intersections:
+        if len(super_intersection) != 1:
+            raise Exception(super_intersection)
+        for intersection in super_intersection:
+            new_intersections.append(intersection)
+    
+    return new_intersections
+
+
+if __name__=="__main__":
+    main()
 
