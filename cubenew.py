@@ -322,7 +322,7 @@ if __name__=='__main__':
         canny_max = cv2.getTrackbarPos('Canny Max', 'frame') + parameters["Canny Max"][1]
         hough_thresh = cv2.getTrackbarPos('Hough Threshold', 'frame') + parameters["Hough Threshold"][1]   
         scale = cv2.getTrackbarPos('Scale', 'frame') + parameters["Scale"][1]
-        print(canny_min, canny_max, hough_thresh, scale)
+        print("Adjusted input params:", canny_min, canny_max, hough_thresh, scale)
 
         square = (0, 0)   # initalize square: (top_left, bottom_right) 
         square = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
