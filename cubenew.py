@@ -120,7 +120,7 @@ solution=[]
 solved=False
 
 cap=cv2.VideoCapture(0)
-cv2.namedWindow('frame')
+cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
 
 
 ''' Parameters '''
@@ -132,10 +132,10 @@ DEFAULT_SCALE = 20
 
 parameters = {
     # name : [default, min, max]
-    "Canny Min": [DEFAULT_CANNY_MIN, 1, 15],
-    "Canny Max": [DEFAULT_CANNY_MAX, 5, 40],
-    "Hough Threshold": [DEFAULT_HOUGH_THRESH, 50, 400],
-    "Scale": [DEFAULT_SCALE, 3, 15]
+    "Canny Min": [DEFAULT_CANNY_MIN, 0, 30],
+    "Canny Max": [DEFAULT_CANNY_MAX, 1, 50],
+    "Hough Threshold": [DEFAULT_HOUGH_THRESH, 30, 400],
+    "Scale": [DEFAULT_SCALE, 3, 30]
 }
 
 
@@ -286,13 +286,18 @@ def process(operation):
 if __name__=='__main__':
 
     preview = np.zeros((700,800,3), np.uint8)
-
+    upload = False
+    counter = 0
     while True:        
         hsv=[]
         current_state=[]
-        ret,img=cap.read()
-        # file_name = "rube_test.jpg"
-        # img = cv2.imread(file_name, cv2.IMREAD_COLOR)
+        if upload:
+            file_name = "rube_test2.jpg"
+            img = cv2.imread(file_name, cv2.IMREAD_COLOR)
+            # dim = (500, 500)
+            # img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+        else:
+            ret,img=cap.read()
         # img=cv2.flip(img,1)
         frame = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -322,7 +327,8 @@ if __name__=='__main__':
         canny_max = cv2.getTrackbarPos('Canny Max', 'frame') + parameters["Canny Max"][1]
         hough_thresh = cv2.getTrackbarPos('Hough Threshold', 'frame') + parameters["Hough Threshold"][1]   
         scale = cv2.getTrackbarPos('Scale', 'frame') + parameters["Scale"][1]
-        print("Adjusted input params:", canny_min, canny_max, hough_thresh, scale)
+        if counter % 10 == 0:
+            print("Adjusted input params:", canny_min, canny_max, hough_thresh, scale)
 
         square = (0, 0)   # initalize square: (top_left, bottom_right) 
         square = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
@@ -377,10 +383,12 @@ if __name__=='__main__':
                 print("all side are not scanned check other window for finding which left to be scanned?")
                 print("left to scan:",6-len(set(check_state)))
         cv2.imshow('preview',preview)
-        cv2.imshow('frame',img[0:500,0:500])
+
+        cv2.imshow('frame',img) # [0:500,0:500]
         
         if square is not None:
             print("Square:", square)
-            cv2.imshow('frame', cv2.rectangle(img[0:500,0:500], square[0], square[1],(0,255,0),3))
+            cv2.imshow('frame', cv2.rectangle(img, square[0], square[1],(0,255,0),3))
+        counter += 1
 
     cv2.destroyAllWindows()

@@ -24,7 +24,7 @@ Heuristics given many intersection points:
 
 def main():
     radian_tolerance = 0.1
-    file_name = "rube_test.jpg"
+    file_name = "rube_test2.jpg"
     img = cv2.imread(file_name, cv2.IMREAD_COLOR)
     gray_img = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
     boxes = findSquares(img, gray_img, show=True)

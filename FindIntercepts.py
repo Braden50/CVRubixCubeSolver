@@ -8,7 +8,7 @@ import math
 
 def main():
     file_path = "C:/Users/brade/OneDrive/Desktop/EE428/FinalPro/"
-    file_name = "rube_test.jpg"
+    file_name = "rube_test2.jpg"
     img = cv2.imread(file_name, cv2.IMREAD_COLOR)
     gray_img = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
     findIntercepts(img, gray_img, show=True)
@@ -25,7 +25,7 @@ def findIntercepts(img, gray_img, canny_min=5, canny_max=30, hough_thresh=150,
     needed_lines = 4  # how many lines are necessary
 
     # Hard coded parameter: how far from 90 and 0 degrees can the lines be
-    rad_tolerance = 0.01
+    rad_tolerance = 0.05
     gray_img = cv2.GaussianBlur(gray_img,(5,5),cv2.BORDER_DEFAULT)  # watch out for the mutation of original gray_img var
     
     # NOTE: The number of lines heavily affects efficiency of program
