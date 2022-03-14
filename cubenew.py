@@ -3,6 +3,8 @@ import numpy as np
 import kociemba as Cube
 import time
 import colorama
+from findSquares import findSquares
+
 GREEN = colorama.Fore.GREEN
 GRAY = colorama.Fore.LIGHTBLACK_EX
 RESET = colorama.Fore.RESET
@@ -119,6 +121,39 @@ solved=False
 
 cap=cv2.VideoCapture(0)
 cv2.namedWindow('frame')
+
+
+''' Parameters '''
+# Default
+DEFAULT_CANNY_MIN = 5
+DEFAULT_CANNY_MAX = 30
+DEFAULT_HOUGH_THRESH = 150
+DEFAULT_SCALE = 20
+
+parameters = {
+    # name : [default, current, min, max]
+    "Canny Min": [DEFAULT_CANNY_MIN, DEFAULT_CANNY_MIN, 1, 15],
+    "Canny Max": [DEFAULT_CANNY_MAX, DEFAULT_CANNY_MAX, 5, 40],
+    "Hough Threshold": [DEFAULT_HOUGH_THRESH, DEFAULT_HOUGH_THRESH, 50, 400],
+    "Scale": [DEFAULT_SCALE, DEFAULT_SCALE, 3, 15]
+}
+
+def updateParameter(name, new_val):
+    values = parameters[name]
+    values[1] = new_val
+    parameters[name] = values
+
+# https://www.geeksforgeeks.org/python-opencv-gettrackbarpos-function/
+def createTrackbars(window_name):
+    for parameter in parameters:
+        values = parameters[parameter]
+        # Trackbars have to have a left value of 0, so all values are shifted for UI
+        # print(1, cv2.getTrackbarPos(parameter, window_name))
+        cv2.createTrackbar(parameter, window_name, values[0] - values[2],
+                           values[3] - values[2], 
+                           lambda new_val : updateParameter(parameter, new_val))
+        print(2, cv2.getTrackbarPos(parameter, window_name))
+
 
 def rotate(side):
     main=state[side]
@@ -256,27 +291,48 @@ if __name__=='__main__':
 
     preview = np.zeros((700,800,3), np.uint8)
 
-    while True:
+    while True:        
         hsv=[]
         current_state=[]
         ret,img=cap.read()
+        # file_name = "rube_test.jpg"
+        # img = cv2.imread(file_name, cv2.IMREAD_COLOR)
         # img=cv2.flip(img,1)
         frame = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        mask = np.zeros(frame.shape, dtype=np.uint8)   
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        mask = np.zeros(frame.shape, dtype=np.uint8)
+        
 
-        draw_stickers(img,stickers,'main')
-        draw_stickers(img,stickers,'current')
-        draw_preview_stickers(preview,stickers)
+        # draw_stickers(img,stickers,'main')
+        # draw_stickers(img,stickers,'current')
+        # draw_preview_stickers(preview,stickers)
+
         fill_stickers(preview,stickers,state)
         texton_preview_stickers(preview,stickers)
+        try:
+            cv2.getTrackbarPos('Canny Min', 'frame')
+        except:  # trackbar not initialized
+            createTrackbars('frame')
 
-        for i in range(9):
-            hsv.append(frame[stickers['main'][i][1]+10][stickers['main'][i][0]+10])
+
+        # for i in range(9):
+        #     hsv.append(frame[stickers['main'][i][1]+10][stickers['main'][i][0]+10])
         
         
         # TODO: get current state
-        current_state = ['orange'] * 9
+        canny_min = parameters["Canny Min"][1]
+        canny_max = parameters["Canny Max"][1]
+        hough_thresh = parameters["Hough Threshold"][1]
+        scale = parameters["Scale"][1]
+
+        square = (0, 0)   # initalize square: (top_left, bottom_right) 
+        square = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
         
+        # Current state defines what colors populate the model for a face
+        current_state = ['orange'] * 9
+            
+
+
         # update view
         a=0
         for x,y in stickers['current']:
@@ -323,5 +379,9 @@ if __name__=='__main__':
                 print("left to scan:",6-len(set(check_state)))
         cv2.imshow('preview',preview)
         cv2.imshow('frame',img[0:500,0:500])
+        
+        if square is not None:
+            print("Square:", square)
+            cv2.imshow('frame', cv2.rectangle(img[0:500,0:500], square[0], square[1],(0,255,0),3))
 
     cv2.destroyAllWindows()

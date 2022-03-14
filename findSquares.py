@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
-from FindIntercepts import findIntercepts
+from findIntercepts import findIntercepts
 from util import show_image
 import numpy as np
+import math
 
 '''
 Diction:
@@ -22,17 +23,33 @@ Heuristics given many intersection points:
 '''
 
 def main():
-    findSquares("rube_test2.jpg", show=True)
+    radian_tolerance = 0.1
+    file_name = "rube_test.jpg"
+    img = cv2.imread(file_name, cv2.IMREAD_COLOR)
+    gray_img = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
+    boxes = findSquares(img, gray_img, show=True)
+    print(boxes)
+    
 
 
-def findSquares(img_loc, show=False):
-    img = cv2.imread(img_loc, cv2.IMREAD_COLOR)
+def findSquares(img, gray_img, canny_min=5, canny_max=30, hough_thresh=150,
+                scale=20, show=False):
+    original_img = img.copy()
     if img is None:
         raise Exception("No Image Uploaded")
-    intercepts = fixIntercepts(findIntercepts(img_loc, show=True))
+    intercepts = findIntercepts(img, gray_img, canny_min,
+                                canny_max, hough_thresh)
+    if not intercepts:
+        return None
+    intercepts = fixIntercepts(intercepts)
+    
+    if len(intercepts) <= 3:
+        print("Not enough intersections")
+        return
     x_vals = [intercept[0] for intercept in intercepts]
     y_vals = [intercept[1] for intercept in intercepts]
-
+    x_vals.sort()
+    y_vals.sort()
     max_x = max(x_vals)
     min_x = min(x_vals)
     max_y = max(y_vals)
@@ -42,16 +59,29 @@ def findSquares(img_loc, show=False):
     top_right = [max_x, min_y]
     bottom_left = [min_x, max_y]
     bottom_right = [max_x, max_y]
-
-    # face_vertical_slope = 
-    # face_horizontal_slope = 
-
-    cv2.namedWindow("test", cv2.WINDOW_NORMAL)
-    cv2.imshow("test", cv2.rectangle(img, top_left, bottom_right,(0,255,0),3)) 
-    # show_image(img, wait=False)
+    try:
+        # face_vertical_slope_cartsian = (max_y - y_vals[-2]) / (max_x - min_x) # estimate, could also be min
+        face_horizontal_slope_cartsian = (max_y - min_y), (min_x - x_vals[1])   # could also be max
+        face_vertical_slope_rad = math.atan2((max_y - y_vals[-2]), (max_x - min_x)) # estimate, could also be min
+        face_horizontal_slope_rad = math.atan2((max_y - min_y), (min_x - x_vals[1]))   # could also be max
+    except ZeroDivisionError:
+        print('up')
     
-    cv2.waitKey(0)
+    # print(face_vertical_slope_cartsian, face_vertical_slope_cartsian)
+    # print('\n')
+    # print(face_vertical_slope_rad, face_vertical_slope_rad)
 
+    if show:
+        cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+        cv2.imshow("test", cv2.rectangle(original_img, top_left, bottom_right,(0,255,0),3))
+        cv2.waitKey(0)
+    print("HERE:", top_left, top_right)
+    return (top_left, bottom_right)
+
+def cart2pol(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return(rho, phi)
 
 
 def fixIntercepts(intersections):
