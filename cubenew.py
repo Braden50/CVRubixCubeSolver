@@ -131,17 +131,13 @@ DEFAULT_HOUGH_THRESH = 150
 DEFAULT_SCALE = 20
 
 parameters = {
-    # name : [default, current, min, max]
-    "Canny Min": [DEFAULT_CANNY_MIN, DEFAULT_CANNY_MIN, 1, 15],
-    "Canny Max": [DEFAULT_CANNY_MAX, DEFAULT_CANNY_MAX, 5, 40],
-    "Hough Threshold": [DEFAULT_HOUGH_THRESH, DEFAULT_HOUGH_THRESH, 50, 400],
-    "Scale": [DEFAULT_SCALE, DEFAULT_SCALE, 3, 15]
+    # name : [default, min, max]
+    "Canny Min": [DEFAULT_CANNY_MIN, 1, 15],
+    "Canny Max": [DEFAULT_CANNY_MAX, 5, 40],
+    "Hough Threshold": [DEFAULT_HOUGH_THRESH, 50, 400],
+    "Scale": [DEFAULT_SCALE, 3, 15]
 }
 
-def updateParameter(name, new_val):
-    values = parameters[name]
-    values[1] = new_val
-    parameters[name] = values
 
 # https://www.geeksforgeeks.org/python-opencv-gettrackbarpos-function/
 def createTrackbars(window_name):
@@ -149,10 +145,10 @@ def createTrackbars(window_name):
         values = parameters[parameter]
         # Trackbars have to have a left value of 0, so all values are shifted for UI
         # print(1, cv2.getTrackbarPos(parameter, window_name))
-        cv2.createTrackbar(parameter, window_name, values[0] - values[2],
-                           values[3] - values[2], 
-                           lambda new_val : updateParameter(parameter, new_val))
-        print(2, cv2.getTrackbarPos(parameter, window_name))
+        cv2.createTrackbar(parameter, window_name, values[0] - values[1],
+                           values[2] - values[1], 
+                           lambda new_val : new_val) 
+        # print(2, cv2.getTrackbarPos(parameter, window_name))
 
 
 def rotate(side):
@@ -310,7 +306,7 @@ if __name__=='__main__':
         fill_stickers(preview,stickers,state)
         texton_preview_stickers(preview,stickers)
         try:
-            cv2.getTrackbarPos('Canny Min', 'frame')
+            canny_min = cv2.getTrackbarPos('Canny Min', 'frame')
         except:  # trackbar not initialized
             createTrackbars('frame')
 
@@ -320,10 +316,13 @@ if __name__=='__main__':
         
         
         # TODO: get current state
-        canny_min = parameters["Canny Min"][1]
-        canny_max = parameters["Canny Max"][1]
-        hough_thresh = parameters["Hough Threshold"][1]
-        scale = parameters["Scale"][1]
+        
+        # parameters are trackbar + min since trackbar starts at 0
+        canny_min = cv2.getTrackbarPos('Canny Min', 'frame') + parameters["Canny Min"][1]
+        canny_max = cv2.getTrackbarPos('Canny Max', 'frame') + parameters["Canny Max"][1]
+        hough_thresh = cv2.getTrackbarPos('Hough Threshold', 'frame') + parameters["Hough Threshold"][1]   
+        scale = cv2.getTrackbarPos('Scale', 'frame') + parameters["Scale"][1]
+        print(canny_min, canny_max, hough_thresh, scale)
 
         square = (0, 0)   # initalize square: (top_left, bottom_right) 
         square = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
