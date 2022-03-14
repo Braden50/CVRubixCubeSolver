@@ -287,8 +287,11 @@ if __name__=='__main__':
 
     preview = np.zeros((700,800,3), np.uint8)
     upload = False
+    capture = False
+    
     counter = 0
-    while True:        
+    raw_img = np.zeros((512,512,3), np.uint8) # intiialize black image
+    while True:   
         hsv=[]
         current_state=[]
         if upload:
@@ -297,7 +300,12 @@ if __name__=='__main__':
             # dim = (500, 500)
             # img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
         else:
-            ret,img=cap.read()
+            if not capture:
+                ret,img=cap.read()
+                raw_img = img.copy()
+            else:
+                img = raw_img.copy()
+
         # img=cv2.flip(img,1)
         frame = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -314,6 +322,9 @@ if __name__=='__main__':
             canny_min = cv2.getTrackbarPos('Canny Min', 'frame')
         except:  # trackbar not initialized
             createTrackbars('frame')
+            cv2.createTrackbar("Capture", 'frame', 0, 1, lambda new_val : new_val) 
+
+        # cv2.createButton("Capture",trigger_capture,None,cv2.QT_PUSH_BUTTON,1)
 
 
         # for i in range(9):
@@ -327,8 +338,11 @@ if __name__=='__main__':
         canny_max = cv2.getTrackbarPos('Canny Max', 'frame') + parameters["Canny Max"][1]
         hough_thresh = cv2.getTrackbarPos('Hough Threshold', 'frame') + parameters["Hough Threshold"][1]   
         scale = cv2.getTrackbarPos('Scale', 'frame') + parameters["Scale"][1]
+        capture_val = cv2.getTrackbarPos('Capture', 'frame')
+        capture = False if capture_val == 0 else True
+        
         if counter % 10 == 0:
-            print("Adjusted input params:", canny_min, canny_max, hough_thresh, scale)
+            print("Adjusted input params:", canny_min, canny_max, hough_thresh, scale, capture)
 
         square = (0, 0)   # initalize square: (top_left, bottom_right) 
         square = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
