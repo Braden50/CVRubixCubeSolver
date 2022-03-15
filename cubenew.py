@@ -210,7 +210,7 @@ def solve(state):
 
 def color_detect(h,s,v):
     # print(h,s,v)
-    if h < 5 and s>5 :
+    if h < 5 and s>5:
         return 'red'
     elif h <10 and h>=3:
         return 'orange'
@@ -285,7 +285,10 @@ def process(operation):
 
 def getMedianPixelValue(im):
     # gets median pixel value of three channel image. Is agnostic to image type (ex HSV vs RGB)
-    x, y, z = cv2.split(im) # Split channels
+    try:
+        x, y, z = cv2.split(im) # Split channels
+    except:
+        return None, None, None
     # Remove zeros
     x = x[x != 0]
     y = y[y != 0]
@@ -381,7 +384,10 @@ if __name__=='__main__':
             for i, square in enumerate(squares):
                 cv2.rectangle(img, square[0], square[1],(0,255,0),3) 
                 h, s, v = getMedianPixelValue(frame[square[0][0]:square[1][0], square[0][1]:square[1][1]])  # extracts median pixel value from image
-                detected_color = color_detect(h, s, v)
+                if h is None:
+                    detected_color = "orange"
+                else:
+                    detected_color = color_detect(h, s, v)
                 current_state[i] = detected_color
             
         a=0
