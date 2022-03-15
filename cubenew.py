@@ -282,7 +282,21 @@ def process(operation):
         cv2.imshow('solution',preview)
         cv2.waitKey()
         cv2.putText(preview, i, (700,50), font,1,(0,0,0), 1, cv2.LINE_AA)  
-        
+
+def getMedianPixelValue(im):
+    # gets median pixel value of three channel image. Is agnostic to image type (ex HSV vs RGB)
+    x, y, z = cv2.split(im) # Split channels
+    # Remove zeros
+    x = x[x != 0]
+    y = y[y != 0]
+    z = z[z != 0]
+    # median values
+    x_median = np.median(x)
+    y_median = np.median(y)
+    z_median = np.median(z)
+    return x_median,y_median,z_median
+
+
 if __name__=='__main__':
 
     preview = np.zeros((700,800,3), np.uint8)
@@ -291,9 +305,10 @@ if __name__=='__main__':
     
     counter = 0
     raw_img = np.zeros((512,512,3), np.uint8) # intiialize black image
+    
+    current_state = ['orange'] * 9
     while True:   
         hsv=[]
-        current_state=[]
         if upload:
             file_name = "rube_test2.jpg"
             img = cv2.imread(file_name, cv2.IMREAD_COLOR)
@@ -331,6 +346,14 @@ if __name__=='__main__':
         #     hsv.append(frame[stickers['main'][i][1]+10][stickers['main'][i][0]+10])
         
         
+        # Current state defines what colors populate the model for a face
+        # if current_state == []:
+        #     current_state = ['orange'] * 9
+        # update view
+        
+            # current_state.append(color_name)
+        # print(current_state)
+
         # TODO: get current state
         
         # parameters are trackbar + min since trackbar starts at 0
@@ -341,25 +364,38 @@ if __name__=='__main__':
         capture_val = cv2.getTrackbarPos('Capture', 'frame')
         capture = False if capture_val == 0 else True
         
-        if counter % 10 == 0:
+        if counter % 100 == 0:
             print("Adjusted input params:", canny_min, canny_max, hough_thresh, scale, capture)
 
-        square = (0, 0)   # initalize square: (top_left, bottom_right) 
-        square = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
+        squares = [(0, 0)]   # initalize square: (top_left, bottom_right) 
+        squares = findSquares(img, gray_img, canny_min, canny_max, hough_thresh, scale)
         
-        # Current state defines what colors populate the model for a face
-        current_state = ['orange'] * 9
+        
+
+        cv2.imshow('preview',preview)
+        cv2.imshow('frame',img) # [0:500,0:500]
+        
+        if squares is not None:
+            if len(squares) != 9:
+                raise Exception("Not enough square subsections")
+            for i, square in enumerate(squares):
+                cv2.rectangle(img, square[0], square[1],(0,255,0),3) 
+                h, s, v = getMedianPixelValue(frame[square[0][0]:square[1][0], square[0][1]:square[1][1]])  # extracts median pixel value from image
+                detected_color = color_detect(h, s, v)
+                current_state[i] = detected_color
             
-
-
-        # update view
         a=0
         for x,y in stickers['current']:
             color_name=current_state[a]  #color_detect(hsv[a][0],hsv[a][1],hsv[a][2])
             cv2.rectangle(img,(x,y),(x+30,y+30),color[color_name],-1)
             a+=1
-            # current_state.append(color_name)
-        # print(current_state)
+        cv2.imshow('frame', img)
+
+
+        counter += 1           
+
+
+        
 
         
         k = cv2.waitKey(5) & 0xFF
@@ -396,13 +432,6 @@ if __name__=='__main__':
             else:
                 print("all side are not scanned check other window for finding which left to be scanned?")
                 print("left to scan:",6-len(set(check_state)))
-        cv2.imshow('preview',preview)
-
-        cv2.imshow('frame',img) # [0:500,0:500]
         
-        if square is not None:
-            print("Square:", square)
-            cv2.imshow('frame', cv2.rectangle(img, square[0], square[1],(0,255,0),3))
-        counter += 1
 
     cv2.destroyAllWindows()

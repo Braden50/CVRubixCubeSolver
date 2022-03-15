@@ -75,8 +75,23 @@ def findSquares(img, gray_img, canny_min=5, canny_max=30, hough_thresh=150,
         cv2.namedWindow("test", cv2.WINDOW_NORMAL)
         cv2.imshow("test", cv2.rectangle(original_img, top_left, bottom_right,(0,255,0),3))
         cv2.waitKey(0)
-    print("HERE:", top_left, top_right)
-    return (top_left, bottom_right)
+    # print("HERE:", top_left, top_right)
+    boxes = []
+    x_diff = (((top_right[0] - top_left[0]) + (bottom_right[0] - bottom_left[0])) / 2) / 3
+    y_diff = (((bottom_left[1] - top_left[1]) + (bottom_right[1] - top_right[1])) / 2) / 3
+    
+    x, y = top_left
+    for _ in range(3):
+        y = top_left[1]
+        for _ in range(3):
+            square_box = ((int(x), int(y)), (int(x+x_diff), int(y+y_diff)))
+            boxes.append(square_box)
+            y += y_diff
+        x += x_diff
+    
+    return boxes
+    
+    #return (top_left, bottom_right)
 
 def cart2pol(x, y):
     rho = np.sqrt(x**2 + y**2)
